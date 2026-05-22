@@ -13,7 +13,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const apiKey = process.env.ANTHROPIC_API_KEY
+    const apiKey = process.env.ANTHROPIC_API_KEY || process.env.anthropic_key
     if (!apiKey) return res.status(500).json({ error: { message: 'API key not configured' } })
 
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
