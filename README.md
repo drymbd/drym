@@ -39,3 +39,4 @@ La clé Anthropic est configurée directement dans l'app (Paramètres).
 - Supabase (auth + database)
 - Anthropic Claude API (IA)
 - docx + exceljs (exports)
+ 
