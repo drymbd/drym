@@ -398,7 +398,7 @@ JSON sans backticks: {"message":"","actions":{"saveReminders":[{"person":"","ent
 Omets clés inutiles. Si rien: "actions":{}`
   chatHist.push({r:'u',t:txt,s:SPACE})
   try{
-    const resp=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1000,system:sys,messages:chatHist.slice(-10).map(m=>({role:m.r==='u'?'user':'assistant',content:m.t}))})})
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':localStorage.getItem('drym_apikey')||'','anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1000,system:sys,messages:chatHist.slice(-10).map(m=>({role:m.r==='u'?'user':'assistant',content:m.t}))})})
     const data=await resp.json(); typing.remove()
     if(data.error) throw new Error(data.error.message)
     let raw=data.content[0].text.replace(/```json[\s\S]*?```|```[\s\S]*?```/g,'').trim()
@@ -444,7 +444,7 @@ async function checkBriefing(){
   const uname=(USER.user_metadata?.full_name||USER.email||'').split(' ')[0]
   setTimeout(async()=>{
     try{
-      const resp=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:200,messages:[{role:'user',content:`Tu es DRYM. Briefing du matin pour ${uname}. ${new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}. Urgents: ${urg.map(r=>r.person+': '+r.context).join(', ')||'aucun'}. Total: ${due.length}. JSON: {"message":"..."} max 3 phrases.`}]})})
+      const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':localStorage.getItem('drym_apikey')||'','anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:200,messages:[{role:'user',content:`Tu es DRYM. Briefing du matin pour ${uname}. ${new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}. Urgents: ${urg.map(r=>r.person+': '+r.context).join(', ')||'aucun'}. Total: ${due.length}. JSON: {"message":"..."} max 3 phrases.`}]})})
       const data=await resp.json()
       if(!data.error){ const p=JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim()); drymSay(p.message) }
     }catch(e){}
@@ -512,7 +512,7 @@ async function queryD(entity){
   const res=document.getElementById('qr'); res.style.display='block'; res.textContent='DRYM analyse…'
   const ctx=meetings.filter(m=>m.space===SPACE&&m.entity===entity).sort((a,b)=>new Date(a.date)-new Date(b.date)).map(m=>`=== ${m.date} — ${m.title} ===\nParticipants: ${(m.participants||[]).join(', ')}\nPoints: ${(m.key_points||[]).join(' / ')}\nNotes: ${m.full_notes||''}`).join('\n\n---\n\n')
   try{
-    const resp=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:400,messages:[{role:'user',content:`Tu es DRYM. Historique ${entity}:\n${ctx}\n\nQuestion: ${q}\n\nJSON: {"answer":"..."} précis, cite dates, max 5 phrases.`}]})})
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':localStorage.getItem('drym_apikey')||'','anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:400,messages:[{role:'user',content:`Tu es DRYM. Historique ${entity}:\n${ctx}\n\nQuestion: ${q}\n\nJSON: {"answer":"..."} précis, cite dates, max 5 phrases.`}]})})
     const data=await resp.json()
     if(data.error) throw new Error()
     res.textContent=JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim()).answer
@@ -577,7 +577,7 @@ async function doEvoExport(){
   toast('Analyse IA en cours…')
   try{
     const ctx=em.sort((a,b)=>new Date(a.date)-new Date(b.date)).map(m=>`[${m.date}] ${m.title}\n${(m.key_points||[]).join(', ')}\n${m.full_notes||''}`).join('\n\n---\n\n')
-    const resp=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1000,messages:[{role:'user',content:`Tu es DRYM. Réunions avec ${evoEntity}:\n${ctx}\n\nSujet: "${topic}"\nExtrais l'évolution réunion par réunion.\nJSON: {"rows":[{"date":"YYYY-MM-DD","titre":"","ce_quon_savait":"","nouveautes":"","statut":"en cours|résolu|en attente"}]}`}]})})
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':localStorage.getItem('drym_apikey')||'','anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1000,messages:[{role:'user',content:`Tu es DRYM. Réunions avec ${evoEntity}:\n${ctx}\n\nSujet: "${topic}"\nExtrais l'évolution réunion par réunion.\nJSON: {"rows":[{"date":"YYYY-MM-DD","titre":"","ce_quon_savait":"","nouveautes":"","statut":"en cours|résolu|en attente"}]}`}]})})
     const data=await resp.json()
     if(data.error) throw new Error()
     const parsed=JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim())
@@ -634,7 +634,7 @@ async function processUp(){
   const txt=await upFile.text(); closeUp(); hideWelcome()
   addMsg('me','[Fichier importé: '+upFile.name+']'); const typing=addTyping()
   try{
-    const resp=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1000,messages:[{role:'user',content:`Tu es DRYM. Analyse ce fichier et extrais tout ce qui est utile.\nFichier: ${upFile.name}\nContenu: ${txt.slice(0,8000)}\nJSON: {"message":"résumé","actions":{"savePeople":[{"name":"","notes":"","anniv":"DD/MM ou null"}],"saveMeetings":[{"entity":"","title":"","date":"YYYY-MM-DD","participants":[],"keyPoints":[],"fullNotes":""}]}}`}]})})
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':localStorage.getItem('drym_apikey')||'','anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1000,messages:[{role:'user',content:`Tu es DRYM. Analyse ce fichier et extrais tout ce qui est utile.\nFichier: ${upFile.name}\nContenu: ${txt.slice(0,8000)}\nJSON: {"message":"résumé","actions":{"savePeople":[{"name":"","notes":"","anniv":"DD/MM ou null"}],"saveMeetings":[{"entity":"","title":"","date":"YYYY-MM-DD","participants":[],"keyPoints":[],"fullNotes":""}]}}`}]})})
     const data=await resp.json(); typing.remove()
     if(data.error) throw new Error(data.error.message)
     const parsed=JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim()), A=parsed.actions||{}
