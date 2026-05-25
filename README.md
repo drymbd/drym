@@ -1,4 +1,4 @@
-# DRYM — Your Personal AI
+# DRYM — Your Personal AI 
 
 ## Setup rapide
 
