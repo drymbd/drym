@@ -368,7 +368,7 @@ async function send(){
     if(A.saveReminders?.length){for(const r of A.saveReminders){const d=new Date();d.setDate(d.getDate()+(r.daysUntil||7));const{data:sv}=await sb.from('reminders').insert({user_id:USER.id,space:SP,...r,due_date:d.toISOString().split('T')[0],created_date:today}).select().single();if(sv)rems=[...rems,sv]}updB()}
     if(A.saveMeeting?.entity){const{data:sv}=await sb.from('meetings').insert({user_id:USER.id,space:SP,entity:A.saveMeeting.entity,title:A.saveMeeting.title,date:A.saveMeeting.date||today,participants:A.saveMeeting.participants||[],key_points:A.saveMeeting.keyPoints||[],full_notes:A.saveMeeting.fullNotes||txt}).select().single();if(sv)mtgs=[sv,...mtgs]}
     if(A.saveAnniv?.name){const ex=ppl.find(x=>x.name===A.saveAnniv.name);const{data:sv}=await sb.from('people').upsert({user_id:USER.id,name:A.saveAnniv.name,notes:ex?.notes||'',anniv:A.saveAnniv.date},{onConflict:'user_id,name'}).select().single();if(sv)ppl=ppl.filter(x=>x.name!==A.saveAnniv.name).concat(sv)}
-    if(A.savePerson?.name){const ex=ppl.find(x=>x.name===A.savePerson.name);const{data:sv}=await sb.from('people').upsert({user_id:USER.id,name:A.savePerson.name,notes:A.savePerson.notes,anniv:ex?.anniv||null},{onConflict:'user_id,name'}).select().single();if(sv)ppl=ppl.filter(x=>x.name!==A.savePerson.name).concat(sv)}
+    if(A.savePerson?.length){for(const sp of A.savePerson){const ex=ppl.find(x=>x.name===sp.name);const{data:sv}=await sb.from('people').upsert({user_id:USER.id,name:sp.name,notes:sp.notes,anniv:ex?.anniv||null},{onConflict:'user_id,name'}).select().single();if(sv)ppl=ppl.filter(x=>x.name!==sp.name).concat(sv)}} if(false&&A.savePerson?.name){const ex=ppl.find(x=>x.name===A.savePerson.name);const{data:sv}=await sb.from('people').upsert({user_id:USER.id,name:A.savePerson.name,notes:A.savePerson.notes,anniv:ex?.anniv||null},{onConflict:'user_id,name'}).select().single();if(sv)ppl=ppl.filter(x=>x.name!==A.savePerson.name).concat(sv)}
     if(A.calEvent?.title)pcal=[A.calEvent]
     hist.push({r:'a',t:p.message})
     await sb.from('chat_history').insert({user_id:USER.id,role:'user',content:txt,space:SP})
@@ -385,7 +385,8 @@ function hiW(){const w=document.getElementById('welc');if(w)w.remove()}
 function addM(role,txt,ex=''){
   const w=document.getElementById('msgs'),now=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})
   const d=document.createElement('div');d.className='msg '+role
-  d.innerHTML=(role==='ai'?'<div class="mlbl">DRYM</div>':'')+'<div class="bub">'+(txt&&txt!=='undefined'?txt:'...')+'</div>'+ex+'<div class="mtime">'+now+'</div>'
+  d.innerHTML=(role==='ai'?'<div class="mlbl">DRYM</div>':'')+'<div class="bub">'+(txt&&txt!=='undefined'?txt.replace(/
+/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<b>$1</b>'):'...')+'</div>'+ex+'<div class="mtime">'+now+'</div>'
   w.appendChild(d);w.scrollTop=w.scrollHeight;return d
 }
 function addTyp(){
