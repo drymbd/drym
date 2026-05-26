@@ -358,7 +358,7 @@ async function send(){
   const sys='Tu es DRYM, assistant de '+un+'. Espace: '+(SP==='work'?'pro':'perso')+'. Aujourd\'hui: '+today+'.\nMÉMOIRE:\nRéunions: '+(rm||'aucune')+'\nReminders: '+(rr||'aucun')+'\nContacts: '+(pp||'aucun')+'\nChat: '+(rh||'aucun')+'\nRÈGLES: Tu es un assistant personnel expert. Tu ANALYSES et SYNTHETISES, tu ne restitues pas les infos brutes. Quand tu memorises une reunion, tu identifies les enjeux, decisions cles et implications. Quand on te pose une question, tu fais une vraie synthese intelligente: contexte, etat actuel, points d attention, ce qu il faut surveiller. Tu anticipes. Jamais d opinions. Francais direct et professionnel.\nJSON sans backticks: {"message":"","actions":{"saveReminders":[{"person":"","entity":"","context":"","daysUntil":7,"type":"followup","urgency":"ok"}],"saveMeeting":{"entity":"","title":"","date":"'+today+'","participants":[],"keyPoints":[],"fullNotes":""},"saveAnniv":{"name":"","date":"DD/MM"},"calEvent":{"title":"","date":"YYYY-MM-DD","time":"HH:MM","duration":60},"savePerson":{"name":"","notes":""},"nextSteps":[""]}}\nOmets clés inutiles. Si rien: "actions":{}'
   hist.push({r:'u',t:txt})
   try{
-    const data=await callAI({model:MODEL,max_tokens:1000,system:sys,messages:hist.slice(-10).filter(m=>m.t&&m.t.trim()).map(m=>({role:m.r==='u'?'user':'assistant',content:m.t}))})
+    const data=await callAI({model:MODEL,max_tokens:2000,system:sys,messages:hist.slice(-10).filter(m=>m.t&&m.t.trim()).map(m=>({role:m.r==='u'?'user':'assistant',content:m.t}))})
     ty.remove()
     if(data.error)throw new Error(data.error.message)
     const txt2=data.content[0].text
@@ -510,7 +510,7 @@ async function doEvo(){
   toast('Analyse…')
   try{
     const ctx=em.sort((a,b)=>new Date(a.date)-new Date(b.date)).map(m=>'['+m.date+'] '+m.title+'\n'+(m.key_points||[]).join(', ')+'\n'+(m.full_notes||'')).join('\n\n---\n\n')
-    const data=await callAI({model:MODEL,max_tokens:1000,messages:[{role:'user',content:'Tu es DRYM. Réunions avec '+evoEnt+':\n'+ctx+'\n\nSujet: "'+topic+'"\nExtrais l\'évolution.\nJSON: {"rows":[{"date":"YYYY-MM-DD","titre":"","ce_quon_savait":"","nouveautes":"","statut":"en cours|résolu|en attente"}]}'}]})
+    const data=await callAI({model:MODEL,max_tokens:2000,messages:[{role:'user',content:'Tu es DRYM. Réunions avec '+evoEnt+':\n'+ctx+'\n\nSujet: "'+topic+'"\nExtrais l\'évolution.\nJSON: {"rows":[{"date":"YYYY-MM-DD","titre":"","ce_quon_savait":"","nouveautes":"","statut":"en cours|résolu|en attente"}]}'}]})
     if(data.error)throw new Error()
     const parsed=JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim())
     const wb=new ExcelJS.Workbook()
@@ -564,7 +564,7 @@ async function processUp(){
   const txt=await upf.text();closeUp();hiW()
   addM('me','[Fichier: '+upf.name+']');const ty=addTyp()
   try{
-    const data=await callAI({model:MODEL,max_tokens:1000,messages:[{role:'user',content:'Tu es DRYM. Analyse ce fichier.\nFichier: '+upf.name+'\nContenu: '+txt.slice(0,8000)+'\nJSON: {"message":"résumé","actions":{"savePeople":[{"name":"","notes":"","anniv":"DD/MM ou null"}],"saveMeetings":[{"entity":"","title":"","date":"YYYY-MM-DD","participants":[],"keyPoints":[],"fullNotes":""}]}}'}]})
+    const data=await callAI({model:MODEL,max_tokens:2000,messages:[{role:'user',content:'Tu es DRYM. Analyse ce fichier.\nFichier: '+upf.name+'\nContenu: '+txt.slice(0,8000)+'\nJSON: {"message":"résumé","actions":{"savePeople":[{"name":"","notes":"","anniv":"DD/MM ou null"}],"saveMeetings":[{"entity":"","title":"","date":"YYYY-MM-DD","participants":[],"keyPoints":[],"fullNotes":""}]}}'}]})
     ty.remove()
     if(data.error)throw new Error(data.error.message)
     const parsed=JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim()),A=parsed.actions||{}
