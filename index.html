@@ -364,7 +364,7 @@ async function send(){
     const txt2=data.content[0].text
     let raw=txt2.replace(/```json[\s\S]*?```|```[\s\S]*?```/g,'').trim()
     const ix=raw.indexOf('{');if(ix>0)raw=raw.slice(ix)
-    const p=JSON.parse(raw),A=p.actions||{}
+    let p;try{p=JSON.parse(raw)}catch(e){p={message:raw.slice(0,200),actions:{}}}const A=p.actions||{}
     if(A.saveReminders?.length){for(const r of A.saveReminders){const d=new Date();d.setDate(d.getDate()+(r.daysUntil||7));const{data:sv}=await sb.from('reminders').insert({user_id:USER.id,space:SP,...r,due_date:d.toISOString().split('T')[0],created_date:today}).select().single();if(sv)rems=[...rems,sv]}updB()}
     if(A.saveMeeting?.entity){const{data:sv}=await sb.from('meetings').insert({user_id:USER.id,space:SP,entity:A.saveMeeting.entity,title:A.saveMeeting.title,date:A.saveMeeting.date||today,participants:A.saveMeeting.participants||[],key_points:A.saveMeeting.keyPoints||[],full_notes:A.saveMeeting.fullNotes||txt}).select().single();if(sv)mtgs=[sv,...mtgs]}
     if(A.saveAnniv?.name){const ex=ppl.find(x=>x.name===A.saveAnniv.name);const{data:sv}=await sb.from('people').upsert({user_id:USER.id,name:A.saveAnniv.name,notes:ex?.notes||'',anniv:A.saveAnniv.date},{onConflict:'user_id,name'}).select().single();if(sv)ppl=ppl.filter(x=>x.name!==A.saveAnniv.name).concat(sv)}
