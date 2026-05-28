@@ -356,9 +356,10 @@ async function send(){
   const rh=hist.slice(-4).map(m=>(m.r==='u'?'U':'D')+': '+m.t.slice(0,200)).join('\n')
   const un=(USER.user_metadata?.full_name||USER.email||'').split(' ')[0]
   const sys='DRYM, assistant de '+un+'. '+today+'. Espace:'+(SP==='work'?'pro':'perso')+'.\nRéunions:'+( rm||'-')+'\nRelances:'+(rr||'-')+'\nContacts:'+(pp||'-')+'\nHistorique:'+(rh||'-')+'\nRéponds en JSON strict (sans backticks): {"message":"...","actions":{"saveReminders":[{"person":"","entity":"","context":"","daysUntil":7,"type":"followup","urgency":"ok"}],"saveMeeting":{"entity":"","title":"","date":"'+today+'","participants":[],"keyPoints":[],"fullNotes":""},"savePerson":{"name":"","notes":""},"calEvent":{"title":"","date":"YYYY-MM-DD","time":"HH:MM","duration":60},"nextSteps":[""]}}\nOmets les clés non utilisées. Synthèse directe, français pro, pas d\'opinions.'
-  hist.push({r:'u',t:txt})
+  hist.push({r:'u',t:txt.slice(0,2000)})
+  if(hist.length>10)hist=hist.slice(-10)
   try{
-    const data=await callAI({model:MODEL,max_tokens:800,system:sys,messages:hist.slice(-4).filter(m=>m.t&&m.t.trim()).map(m=>({role:m.r==="u"?"user":"assistant",content:m.t.slice(0,1500)}))})
+    const data=await callAI({model:MODEL,max_tokens:800,system:sys,messages:hist.slice(-2).filter(m=>m.t&&m.t.trim()).map(m=>({role:m.r==="u"?"user":"assistant",content:m.t.slice(0,800)}))})
     ty.remove()
     if(data.error)throw new Error(data.error.message)
     const txt2=data.content[0].text
