@@ -165,7 +165,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--fh);background:var(--bg)
 </style>
 </head>
 <body>
-
+ 
 <div id="auth">
   <div class="abox">
     <div class="alogo">DRYM</div>
@@ -178,7 +178,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--fh);background:var(--bg)
     <p class="asec">🔒 Tes données sont privées et chiffrées</p>
   </div>
 </div>
-
+ 
 <div id="app" style="display:none">
   <div class="tbar">
     <div class="tlogo" onclick="goP('chat')">DRYM</div>
@@ -250,7 +250,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--fh);background:var(--bg)
     </div>
   </div>
 </div>
-
+ 
 <div id="upmodal" class="moverlay">
   <div class="modal">
     <div class="moti">Importer un fichier</div>
@@ -266,7 +266,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--fh);background:var(--bg)
     </div>
   </div>
 </div>
-
+ 
 <div id="evomodal" class="moverlay">
   <div class="modal">
     <div class="moti">Rapport d'évolution</div>
@@ -278,18 +278,18 @@ html,body{height:100%;overflow:hidden;font-family:var(--fh);background:var(--bg)
     </div>
   </div>
 </div>
-
+ 
 <div id="toast"></div>
-
+ 
 <script>
 const SURL='https://xyuseguuxfmqdyeyxbqn.supabase.co'
 const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5dXNlZ3V1eGZtcWR5ZXl4YnFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0MDkzMDAsImV4cCI6MjA5NDk4NTMwMH0.doklqAKbsgXCW4dAvAJuVOvG5XpzSmrMxvd9oVYNdh4'
 const PROXY='https://xyuseguuxfmqdyeyxbqn.supabase.co/functions/v1/anthropic-proxy'
 const MODEL='claude-sonnet-4-6'
 const sb=supabase.createClient(SURL,SKEY)
-
+ 
 let USER=null,SP='work',rems=[],mtgs=[],ppl=[],hist=[],pcal=[],upf=null,evoEnt=null
-
+ 
 async function boot(){
   tick();setInterval(tick,60000)
   const{data:{session}}=await sb.auth.getSession()
@@ -301,12 +301,12 @@ async function boot(){
   document.getElementById('btn-google').onclick=()=>sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.origin}})
 }
 boot()
-
+ 
 function tick(){
   const d=new Date(),el=document.getElementById('tdate')
   if(el)el.innerHTML=d.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'})+'<br>'+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})
 }
-
+ 
 async function launch(){
   document.getElementById('auth').style.display='none'
   document.getElementById('app').style.display='flex'
@@ -317,12 +317,12 @@ async function launch(){
   await Promise.all([lR(),lM(),lP(),lC()])
   updB();briefing()
 }
-
+ 
 async function lR(){try{const{data}=await sb.from('reminders').select('*').eq('user_id',USER.id).eq('dismissed',false).order('due_date');rems=data||[]}catch{rems=[]}}
 async function lM(){try{const{data}=await sb.from('meetings').select('*').eq('user_id',USER.id).order('date',{ascending:false});mtgs=data||[]}catch{mtgs=[]}}
 async function lP(){try{const{data}=await sb.from('people').select('*').eq('user_id',USER.id);ppl=data||[]}catch{ppl=[]}}
 async function lC(){try{const{data}=await sb.from('chat_history').select('*').eq('user_id',USER.id).order('created_at',{ascending:false}).limit(10);hist=(data||[]).reverse().map(r=>({r:r.role==='user'?'u':'a',t:r.content}))}catch{hist=[]}}
-
+ 
 function goP(p){
   document.getElementById('pChat').style.display=p==='chat'?'flex':'none'
   ;['Reminders','Dossiers','Annivs','Settings'].forEach(x=>document.getElementById('p'+x)?.classList.toggle('on',x.toLowerCase()===p))
@@ -337,12 +337,12 @@ function setSp(s){SP=s;document.getElementById('spw').classList.toggle('on',s===
 function hKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}}
 function aR(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,130)+'px'}
 function useChip(el){document.getElementById('cta').value=el.textContent;send()}
-
+ 
 async function callAI(body){
   const r=await fetch(PROXY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
   return r.json()
 }
-
+ 
 async function send(){
   const ta=document.getElementById('cta'),txt=ta.value.trim()
   if(!txt)return
@@ -365,15 +365,14 @@ async function send(){
     let raw=txt2.replace(/```json[\s\S]*?```|```[\s\S]*?```/g,'').trim()
     const ix=raw.indexOf('{');if(ix>0)raw=raw.slice(ix)
     let p,A={};try{p=JSON.parse(raw);A=p.actions||{}}catch(e){const mm=raw.match(/"message"\s*:\s*"((?:[^"\\\\]|\\\\.)*)"/);p={message:mm?mm[1].replace(/\\\\n/g,'\n'):'...'};A={}}
-    if(A.saveReminders?.length){for(const r of A.saveReminders){const d=new Date();d.setDate(d.getDate()+(r.daysUntil||7));const{data:sv}=await sb.from('reminders').insert({user_id:USER.id,space:SP,...r,due_date:d.toISOString().split('T')[0],created_date:today}).select().single();if(sv)rems=[...rems,sv]}updB()}
-    if(A.saveMeeting?.entity){const{data:sv}=await sb.from('meetings').insert({user_id:USER.id,space:SP,entity:A.saveMeeting.entity,title:A.saveMeeting.title,date:A.saveMeeting.date||today,participants:A.saveMeeting.participants||[],key_points:A.saveMeeting.keyPoints||[],full_notes:A.saveMeeting.fullNotes||txt}).select().single();if(sv)mtgs=[sv,...mtgs]}
-    if(A.saveAnniv?.name){const ex=ppl.find(x=>x.name===A.saveAnniv.name);const{data:sv}=await sb.from('people').upsert({user_id:USER.id,name:A.saveAnniv.name,notes:ex?.notes||'',anniv:A.saveAnniv.date},{onConflict:'user_id,name'}).select().single();if(sv)ppl=ppl.filter(x=>x.name!==A.saveAnniv.name).concat(sv)}
-    const savePersonList=A.savePerson?(Array.isArray(A.savePerson)?A.savePerson:(A.savePerson.name?[A.savePerson]:[])):[]
-    for(const sp of savePersonList){const ex=ppl.find(x=>x.name===sp.name);const{data:sv}=await sb.from('people').upsert({user_id:USER.id,name:sp.name,notes:sp.notes||'',anniv:ex?.anniv||null},{onConflict:'user_id,name'}).select().single();if(sv)ppl=ppl.filter(x=>x.name!==sp.name).concat(sv)}
+    try{if(A.saveReminders?.length){for(const r of A.saveReminders){const d=new Date();d.setDate(d.getDate()+(r.daysUntil||7));const{data:sv}=await sb.from('reminders').insert({user_id:USER.id,space:SP,...r,due_date:d.toISOString().split('T')[0],created_date:today}).select().single();if(sv)rems=[...rems,sv]}updB()}}catch(e){console.warn('reminders:',e)}
+    try{if(A.saveMeeting?.entity){const{data:sv}=await sb.from('meetings').insert({user_id:USER.id,space:SP,entity:A.saveMeeting.entity,title:A.saveMeeting.title,date:A.saveMeeting.date||today,participants:A.saveMeeting.participants||[],key_points:A.saveMeeting.keyPoints||[],full_notes:A.saveMeeting.fullNotes||txt}).select().single();if(sv)mtgs=[sv,...mtgs]}}catch(e){console.warn('meeting:',e)}
+    try{if(A.saveAnniv?.name){const ex=ppl.find(x=>x.name===A.saveAnniv.name);const{data:sv}=await sb.from('people').upsert({user_id:USER.id,name:A.saveAnniv.name,notes:ex?.notes||'',anniv:A.saveAnniv.date},{onConflict:'user_id,name'}).select().single();if(sv)ppl=ppl.filter(x=>x.name!==A.saveAnniv.name).concat(sv)}}catch(e){console.warn('anniv:',e)}
+    try{const savePersonList=A.savePerson?(Array.isArray(A.savePerson)?A.savePerson:(A.savePerson.name?[A.savePerson]:[])):[]; for(const sp of savePersonList){const ex=ppl.find(x=>x.name===sp.name);const{data:sv}=await sb.from('people').upsert({user_id:USER.id,name:sp.name,notes:sp.notes||'',anniv:ex?.anniv||null},{onConflict:'user_id,name'}).select().single();if(sv)ppl=ppl.filter(x=>x.name!==sp.name).concat(sv)}}catch(e){console.warn('person:',e)}
     if(A.calEvent?.title)pcal=[A.calEvent]
     hist.push({r:'a',t:p.message})
-    await sb.from('chat_history').insert({user_id:USER.id,role:'user',content:txt,space:SP})
-    await sb.from('chat_history').insert({user_id:USER.id,role:'assistant',content:p.message,space:SP})
+    try{await sb.from('chat_history').insert({user_id:USER.id,role:'user',content:txt,space:SP})}catch(e){console.warn('history:',e)}
+    try{await sb.from('chat_history').insert({user_id:USER.id,role:'assistant',content:p.message,space:SP})}catch(e){console.warn('history:',e)}
     let ex=''
     if(A.nextSteps?.length)ex+='<div class="cc"><div class="cclbl">NEXT STEPS</div>'+A.nextSteps.map((s,i)=>'<div class="step"><div class="sn">'+(i+1)+'</div><div class="st">'+s+'</div></div>').join('')+'</div>'
     if(A.calEvent?.title)ex+='<div class="cals"><span style="font-size:18px;margin-right:4px">📅</span><div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--bld)">'+A.calEvent.title+'</div><div style="font-family:var(--fm);font-size:10px;color:var(--mu)">'+A.calEvent.date+' '+(A.calEvent.time||'')+'</div></div><div style="display:flex;gap:5px"><button class="bcy" onclick="addCal(this)">+ Calendar</button><button class="bcn" onclick="this.closest(\'.cals\').remove()">✕</button></div></div>'
@@ -381,7 +380,7 @@ async function send(){
   }catch(e){ty.remove();console.error(e);addM('ai','Erreur: '+e.message)}
   document.getElementById('sbtn').disabled=false
 }
-
+ 
 function hiW(){const w=document.getElementById('welc');if(w)w.remove()}
 function addM(role,txt,ex=''){
   const w=document.getElementById('msgs'),now=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})
@@ -395,7 +394,7 @@ function addTyp(){
   w.appendChild(d);w.scrollTop=w.scrollHeight;return d
 }
 function drymSay(t){hiW();addM('ai',t)}
-
+ 
 async function briefing(){
   const last=localStorage.getItem('drym_lb_'+USER.id)||'',today=new Date().toISOString().split('T')[0]
   if(last===today)return
@@ -410,12 +409,12 @@ async function briefing(){
     }catch{}
   },800)
 }
-
+ 
 function updB(){
   const n=rems.filter(r=>!r.dismissed&&Math.ceil((new Date(r.due_date)-new Date())/864e5)<=3).length
   const b=document.getElementById('rbadge');b.style.display=n?'flex':'none';b.textContent=n
 }
-
+ 
 function renderR(){
   const list=document.getElementById('rlist'),sub=document.getElementById('rsub')
   const ac=rems.filter(r=>!r.dismissed).sort((a,b)=>new Date(a.due_date)-new Date(b.due_date))
@@ -430,7 +429,7 @@ function renderR(){
   }).join('')
 }
 async function disR(id){await sb.from('reminders').update({dismissed:true}).eq('id',id);rems=rems.map(r=>r.id===id?{...r,dismissed:true}:r);updB();renderR();toast('Archivé ✓')}
-
+ 
 function renderD(ent){
   const box=document.getElementById('dwrap'),sm=mtgs.filter(m=>m.space===SP)
   const fd=ds=>new Date(ds).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'})
@@ -445,7 +444,7 @@ function renderD(ent){
   const fd2=ds=>new Date(ds).toLocaleDateString('fr-FR',{day:'numeric',month:'short'})
   box.innerHTML='<div class="ptit">Dossiers</div><div class="psub">Tes interactions mémorisées</div><div class="dgrid">'+Object.entries(ents).sort((a,b)=>new Date(b[1].last)-new Date(a[1].last)).map(([n,e])=>'<div class="dcard" onclick="renderD(\''+n+'\')"><div class="dic">'+ic[i++%ic.length]+'</div><div class="dname">'+n+'</div><div class="dmeta">'+e.c+' réunion'+(e.c!==1?'s':'')+' · '+fd2(e.last)+'</div></div>').join('')+'</div>'
 }
-
+ 
 async function queryD(ent){
   const q=document.getElementById('qi')?.value.trim();if(!q)return
   const res=document.getElementById('qr');res.style.display='block';res.textContent='DRYM analyse…'
@@ -456,7 +455,7 @@ async function queryD(ent){
     res.textContent=JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim()).answer
   }catch{res.textContent='Erreur.'}
 }
-
+ 
 async function wordExport(id){
   const m=mtgs.find(x=>x.id===id);if(!m)return
   toast('Génération Word…')
@@ -479,7 +478,7 @@ async function wordExport(id){
     toast('Word ✓')
   }catch(e){toast('Erreur Word');console.error(e)}
 }
-
+ 
 async function xlsAll(ent){
   const em=mtgs.filter(m=>m.space===SP&&m.entity===ent)
   if(!em.length){toast('Aucune réunion');return}
@@ -500,9 +499,9 @@ async function xlsAll(ent){
     toast('Excel ✓')
   }catch(e){toast('Erreur Excel');console.error(e)}
 }
-
+ 
 function openEvo(ent){evoEnt=ent;document.getElementById('evomodal').classList.add('open')}
-
+ 
 async function doEvo(){
   const topic=document.getElementById('evotopic').value.trim()
   if(!topic){toast('Entre un sujet !');return}
@@ -530,7 +529,7 @@ async function doEvo(){
     toast('Excel évolution ✓')
   }catch(e){toast('Erreur');console.error(e)}
 }
-
+ 
 function renderA(){
   const wrap=document.getElementById('awrap'),today=new Date()
   const list=ppl.filter(p=>p.anniv).map(p=>{
@@ -542,7 +541,7 @@ function renderA(){
   if(!list.length){wrap.innerHTML='<div style="color:var(--mu2);font-size:13px;padding:16px 0">Dis à DRYM "l\'anniv de Marie c\'est le 15 mars" !</div>';return}
   wrap.innerHTML=list.map(a=>'<div class="aitem"><div style="font-size:20px;width:34px;text-align:center">🎂</div><div><div class="aname">'+a.name+'</div><div class="adate">'+a.anniv+'</div></div><div class="abadge'+(a.days<=30?' soon':'')+'">'+(a.days===0?'Aujourd\'hui !':a.days===1?'Demain !':'Dans '+a.days+'j')+'</div></div>').join('')
 }
-
+ 
 function addCal(btn){
   const ev=pcal[0];if(!ev)return
   const start=ev.date+'T'+(ev.time||'09:00')+':00'
@@ -551,14 +550,14 @@ function addCal(btn){
   window.open('https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(ev.title)+'&dates='+fmt(new Date(start))+'/'+fmt(end),'_blank')
   btn.closest('.cals')?.remove();toast('Calendar ✓')
 }
-
+ 
 function openUp(){document.getElementById('upmodal').classList.add('open')}
 function closeUp(){document.getElementById('upmodal').classList.remove('open');upf=null;document.getElementById('dtxt').textContent='Clique ou glisse un fichier ici';document.getElementById('upgo').disabled=true}
 function dov(e){e.preventDefault();document.getElementById('dropz').classList.add('over')}
 function ddr(e){e.preventDefault();document.getElementById('dropz').classList.remove('over');const f=e.dataTransfer.files[0];if(f)hf(f)}
 function fsel(e){const f=e.target.files[0];if(f)hf(f)}
 function hf(f){upf=f;document.getElementById('dtxt').textContent=f.name+' ('+Math.round(f.size/1024)+'KB)';document.getElementById('upgo').disabled=false}
-
+ 
 async function processUp(){
   if(!upf)return
   const btn=document.getElementById('upgo');btn.disabled=true;btn.textContent='Analyse…'
@@ -575,13 +574,13 @@ async function processUp(){
   }catch(e){ty.remove();addM('ai','Erreur.')}
   btn.textContent='Analyser →'
 }
-
+ 
 async function exportAll(){
   const blob=new Blob([JSON.stringify({rems,mtgs,ppl},null,2)],{type:'application/json'})
   saveAs(blob,'drym-backup-'+new Date().toISOString().split('T')[0]+'.json')
   toast('Exporté ✓')
 }
-
+ 
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600)}
 </script>
 </body>
