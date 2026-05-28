@@ -359,13 +359,13 @@ async function send(){
   hist.push({r:'u',t:txt.slice(0,2000)})
   if(hist.length>10)hist=hist.slice(-10)
   try{
-    const data=await callAI({model:MODEL,max_tokens:800,system:sys,messages:hist.slice(-2).filter(m=>m.t&&m.t.trim()).map(m=>({role:m.r==="u"?"user":"assistant",content:m.t.slice(0,800)}))})
+    const data=await callAI({model:MODEL,max_tokens:1200,system:sys,messages:hist.slice(-2).filter(m=>m.t&&m.t.trim()).map(m=>({role:m.r==="u"?"user":"assistant",content:m.t.slice(0,800)}))})
     ty.remove()
     if(data.error)throw new Error(data.error.message)
     const txt2=data.content[0].text
     let raw=txt2.replace(/```json[\s\S]*?```|```[\s\S]*?```/g,'').trim()
     const ix=raw.indexOf('{');if(ix>0)raw=raw.slice(ix)
-    let p,A={};try{p=JSON.parse(raw);A=p.actions||{}}catch(e){const mm=raw.match(/"message"\s*:\s*"((?:[^"\\\\]|\\\\.)*)"/);p={message:mm?mm[1].replace(/\\\\n/g,'\n'):'...'};A={}}
+    let p,A={};try{p=JSON.parse(raw);A=p.actions||{}}catch(e){const mm=raw.match(/"message":"([^"]{0,500})/);p={message:mm?mm[1]:'...'};A={}}
     try{if(A.saveReminders?.length){for(const r of A.saveReminders){const d=new Date();d.setDate(d.getDate()+(r.daysUntil||7));const{data:sv}=await sb.from('reminders').insert({user_id:USER.id,space:SP,...r,due_date:d.toISOString().split('T')[0],created_date:today}).select().single();if(sv)rems=[...rems,sv]}updB()}}catch(e){console.warn('reminders:',e)}
     try{if(A.saveMeeting?.entity){const{data:sv}=await sb.from('meetings').insert({user_id:USER.id,space:SP,entity:A.saveMeeting.entity,title:A.saveMeeting.title,date:A.saveMeeting.date||today,participants:A.saveMeeting.participants||[],key_points:A.saveMeeting.keyPoints||[],full_notes:A.saveMeeting.fullNotes||txt}).select().single();if(sv)mtgs=[sv,...mtgs]}}catch(e){console.warn('meeting:',e)}
     try{if(A.saveAnniv?.name){const ex=ppl.find(x=>x.name===A.saveAnniv.name);const{data:sv}=await sb.from('people').upsert({user_id:USER.id,name:A.saveAnniv.name,notes:ex?.notes||'',anniv:A.saveAnniv.date},{onConflict:'user_id,name'}).select().single();if(sv)ppl=ppl.filter(x=>x.name!==A.saveAnniv.name).concat(sv)}}catch(e){console.warn('anniv:',e)}
@@ -586,3 +586,4 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
 </script>
 </body>
 </html>
+ 
